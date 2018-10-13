@@ -6,9 +6,12 @@ function: 分析RSS改变
 """
 import re,mutils
 import numpy as np,xlwt
+import matplotlib.mlab as mlab
+import matplotlib.pyplot as plt
 print('start:')
 # 全局参数
-srcfile = 'G:/libdata3/async1/hm.txt'
+iswrite = False
+srcfile = 'G:/libdata3/async1/mi5.txt'
 print(srcfile)
 # 读入WLAN数据
 list = [[],[],[],[],[]]
@@ -35,8 +38,9 @@ for i in range(len(list[id])):
     times[idx[0]] = list[timestamp][i]
 print('rssi size:',rssis.shape)    
 # 将矩阵写入csv文件
-mutils.write2csv(mutils.getOutFilename(srcfile,'rssi_','csv'), rssis.tolist())
-mutils.write2csv(mutils.getOutFilename(srcfile,'chan_','csv'), chans.tolist())
+if iswrite:
+    mutils.write2csv(mutils.getOutFilename(srcfile,'rssi_','csv'), rssis.tolist())
+    mutils.write2csv(mutils.getOutFilename(srcfile,'chan_','csv'), chans.tolist())
 print('#write:',mutils.getOutFilename(srcfile,'rssi_','csv'))
 print('#write:',mutils.getOutFilename(srcfile,'chan_','csv'))
 # 分析RSSI发生变化的平均时间
@@ -48,14 +52,36 @@ for i in range(1,rssis.shape[0]):
         lastidx = i
 (ave_id, ave_time) = ( np.average(np.array(tl)[:,1]), np.average(np.array(tl)[:,2]) )
 print('changed times:',len(tl),'ave_id:',ave_id,'ave_time:',ave_time)
-mutils.write2csv(mutils.getOutFilename(srcfile,'output_','csv'), tl)
-#print(tl)
+if iswrite:
+    mutils.write2csv(mutils.getOutFilename(srcfile,'change_','csv'), tl)
+charr = np.array(tl)[:,1]
+total_num = len(tl)
+tm = set(charr.tolist())
+stats = []
+for em in tm:
+    stats.append ((em, np.sum(charr == em)/total_num*100))
+(x,y) = ([x for (x,y) in stats], [y for (x,y) in stats])
+# plt.bar(x,y)
+regf = re.compile(r'^.*/(\w+)/([^/]+)\.\w+$')
+# plt.title('  '.join(regf.findall(srcfile)[0]))
+# plt.xlabel('id nterval')
+
+plt.hist(np.array(tl)[:,2])
+plt.title('  '.join(regf.findall(srcfile)[0]))
+plt.xlabel('time nterval (ms)')
+#plt.ylabel('(%)')
+plt.show()
+#print(charr)
+#print(stats)
+
+
 # 分析同一AP是否会自动切换channel
 chanschanged = []
 chanslist = np.transpose(chans).tolist()
 for i in range(len(chanslist)):
     tmp = set(chanslist[i])
-    tmp.remove(0)
+    if 0 in tmp:
+        tmp.remove(0)
     chanschanged.append(tmp)
     if len(tmp)>1:
         print(' AP:', i, tmp)
