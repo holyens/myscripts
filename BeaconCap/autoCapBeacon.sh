@@ -18,9 +18,9 @@ if [ x"$3" = x ]; then
 # Do capture on all channel
 for ((i=1; i<=13; i++))
 do	
-    iw dev mon0 set channel $i
+    sudo iw dev mon0 set channel $i
     echo "channel-$i"
-    tshark -i mon0  -a duration:$2 -w cap/$1_$2_$i.pcapng -n
+    sudo tshark -i mon0  -a duration:$2 -w cap/$1_$2_$i.pcapng -n
     if [ 1 == $i ]
     then
         :
@@ -28,8 +28,7 @@ do
 done
 else
 # Do capture on the specified channel
-    iw dev mon0 set channel $3
+    sudo iw dev mon0 set channel $3
     echo "channel-$3"
-    tshark -i mon0  -a duration:$2 -w cap/$1_$2_$3.pcapng -n
+    sudo tshark -i mon0  -a duration:$2 -w cap/$1_$2_$3.pcapng -n
 fi
-
