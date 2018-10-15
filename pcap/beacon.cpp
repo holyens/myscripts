@@ -9,7 +9,7 @@
 #include <sys/time.h>
 #include <net/if.h>
 
-typedef unsigned char bool;
+//typedef unsigned char bool;
 typedef signed char int8;
 typedef unsigned char uint8;
 typedef signed short int16;
@@ -19,7 +19,7 @@ typedef unsigned int uint32;
 typedef signed long long int64;
 typedef unsigned long long uint64;
 
-#define AP_COUNT 8
+#define AP_COUNT 2
 
 struct ap
 {
@@ -60,7 +60,7 @@ uint16 create_beacon_frame(uint8* p_buffer,struct ap* p_ap)
     return 38+p_ap->essid_len;
 }
 
-int32 create_raw_socket(char* p_iface)
+int32 create_raw_socket(const char* p_iface)
 {
     /* new raw socket */
     int32 t_socket=socket(PF_PACKET,SOCK_RAW,htons(ETH_P_ALL));
@@ -132,17 +132,17 @@ int32 main()
         t_essid[7]+=t_i;
         init_ap(&t_aps[t_i],t_mac,t_essid);
     }
-    int32 t_socket=create_raw_socket("wlan0");
+    int32 t_socket=create_raw_socket("wlx8cbebe05496a");
     while(1)
     {
         for(t_i=0;t_i<AP_COUNT;t_i++)
         {
             uint8 t_buffer[1024];
             uint16 t_len=create_beacon_frame(t_buffer,t_aps+t_i);
-            printf("%dn",send_80211_frame(t_socket,t_buffer,t_len));
+            printf("%d\n",send_80211_frame(t_socket,t_buffer,t_len));
         }
         usleep(100000);
     }
     return 0;
 }
-=
+
