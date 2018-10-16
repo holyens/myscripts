@@ -4,6 +4,7 @@
 
 # 获取无线网卡名称
 wldev=`ls /sys/class/net|grep 'wl[[:alnum:]]\+' -o`
+echo "rename $wldev as wlan0 "
 
 # 更改无线网卡名称及模式
 sudo ip link set $wldev down
@@ -13,7 +14,9 @@ sudo ip link set wlan0 up
 
 # 设置要监听的无线信道
 if [ x$1 = x ]; then
-  sudo iw dev wlan0 channel 1
+  sudo iw dev wlan0 set channel 1
 else
-  sudo iw dev wlan0 channel $1
+  sudo iw dev wlan0 set channel $1
 fi
+echo "done."
+

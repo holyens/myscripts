@@ -5,3 +5,4 @@
 sudo ip link set wlan0 down
 sudo iwconfig wlan0 mode managed
 sudo ip link set wlan0 up
+echo "down."
