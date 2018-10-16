@@ -21,17 +21,85 @@ typedef unsigned long long uint64;
 
 #define AP_COUNT 4
 
-struct MAC_FRAME{
-    uint8 fc[2];
-    uint8 duration[2];
-    uint8 addr1[6];
-    uint8 addr2[6];
-    uint8 addr3[6];
-    uint8 sc[2];
-    uint8 addr4[6];
-    uint8 *body;
-    uint8 fcs[4];
+struct MAC_BEACON_BODY_TAGGED{
+    uint8 tag_num;
+    uint8 tag_len;
+    uint8 *tag_data;
 };
+
+struct AP{
+    uint8 bssid[6];
+    char  essid[32];
+    uint8 essid_len;
+    uint8  enable_probe_rep;
+    uint16 seq_id;
+    uint16 beacon_interval;
+    uint16 capa_info;   //0x0001;    
+};
+
+int32 create_beacon_frame(struct AP ap, uint8 buf[], uint32 n)
+{   
+    static seq_id = 1024;
+    
+    uint8 buf[2400];
+    memcpy(buf+0, "\x80\x00", 2);         //version[2]:type[2]:subtype[4]:other[8] bits
+    memcpy(buf+2, "\x00\x00", 2);         //duration/id[2] byte
+    memcpy(buf+4, "\xff\xff\xff\xff\xff\xff", 6);       //addr1[6]
+    memcpy(buf+10, ap.bssid, 6);       //addr2
+    memcpy(buf+16, ap.bssid, 6);       //addr3
+    
+    *((uint16*)(buf+22)) = seq_id;
+    seq_id += 10;
+    // fixed
+    struct timeval t_time;
+    gettimeofday(&t_time,0);
+    *((uint64*)(buf+24)) = ((uint64)t_time.tv_sec)*1000000+t_time.tv_usec;
+    *((uint16*)(buf+32)) = ap.beacon_interval;
+    *((uint16*)(buf+34)) = ap.capa_info;
+    // tagged
+    uint32 offset = 36;
+    buf[offset++] = 0x00;
+    buf[offset++] = ap.essid_len;
+    memcpy(buf+offset, ap.essid, ap.essid_len);
+    offset += ap.essid_len;
+
+}
+
+int32 main()
+{
+    struct ap t_aps[AP_COUNT];
+    uint32 t_i;
+    for(t_i=0;t_i<AP_COUNT;t_i++)
+    {
+        uint8 t_mac[6];
+        char t_essid[32];
+        memcpy(t_mac,"\xEC\x17\x2F\x2D\xB6\xB0",6);
+        memcpy(t_essid,"zjs ap 0",9);
+        t_mac[5]+=t_i;
+        t_essid[7]+=t_i;
+        init_ap(&t_aps[t_i],t_mac,t_essid);
+    }
+    int32 t_socket=create_raw_socket("wlan0");
+    while(1)
+    {
+        for(t_i=0;t_i<AP_COUNT;t_i++)
+        {
+            uint8 t_buffer[1024];
+            uint16 t_len=create_beacon_frame(t_buffer,t_aps+t_i);
+            printf("%d\n",send_80211_frame(t_socket,t_buffer,t_len));
+        }
+        usleep(100000);
+    }
+    return 0;
+}
+
+
+
+
+struct MAC_HEADER mac_header = {{0x80,0x00}, 0x00,0x00, 0xff,0xff,0xff,0xff,0xff,0xff, }
+uint8 *body;
+    uint8 fcs[4];
+
 
 struct ap
 {
