@@ -39,7 +39,7 @@ struct AP{
 #define xmemcpy(dest,src,num) memcpy(dest,src,num); dest += num
 uint32 create_beacon_frame(uint8 *buf, uint32 n, struct AP ap)
 {   
-    static seq_id = 1024;
+    static uint16 seq_id = 1024;
     uint8 *pbuf = buf;
     // radiotap header
     xmemcpy(pbuf, "\x00\x00\x0d\x00\x04\x80\x02\x00\x02\x00\x00\x00\x00", 13); 
@@ -81,7 +81,7 @@ int32 main(int argc, char *argv[])
     while(1)
     {
         uint8 t_buffer[4096];
-        uint32 t_len=create_beacon_frame(t_buffer, n, ap);
+        uint32 t_len=create_beacon_frame(t_buffer, 4096, ap);
         int32 t_size=write(t_socket, t_buffer, t_len);
         if(t_size<0)
         {
