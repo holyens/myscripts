@@ -19,7 +19,19 @@ typedef unsigned int uint32;
 typedef signed long long int64;
 typedef unsigned long long uint64;
 
-#define AP_COUNT 2
+#define AP_COUNT 4
+
+struct MAC_FRAME{
+    uint8 fc[2];
+    uint8 duration[2];
+    uint8 addr1[6];
+    uint8 addr2[6];
+    uint8 addr3[6];
+    uint8 sc[2];
+    uint8 addr4[6];
+    uint8 *body;
+    uint8 fcs[4];
+};
 
 struct ap
 {
@@ -132,7 +144,7 @@ int32 main()
         t_essid[7]+=t_i;
         init_ap(&t_aps[t_i],t_mac,t_essid);
     }
-    int32 t_socket=create_raw_socket("wlx8cbebe05496a");
+    int32 t_socket=create_raw_socket("wlan0");
     while(1)
     {
         for(t_i=0;t_i<AP_COUNT;t_i++)
