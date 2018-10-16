@@ -3,13 +3,13 @@
 # $1: channel, Opt, default: 1
 
 # 获取无线网卡名称
-wldev=$(iwconfig |grep "^wl[[:alnum:]]*" -o)
+wldev=`ls /sys/class/net|grep 'wl[[:alnum:]]\+' -o`
 
 # 更改无线网卡名称及模式
-ip link set $wldev down
-ip link set $wldev name wlan0
-iwconfig wlan0 mode monitor
-ip link set wlan0 up
+sudo ip link set $wldev down
+sudo ip link set $wldev name wlan0
+sudo iwconfig wlan0 mode monitor
+sudo ip link set wlan0 up
 
 # 设置要监听的无线信道
 if [ x$1 = x ]; then
