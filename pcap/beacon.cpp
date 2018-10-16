@@ -32,112 +32,65 @@ struct AP{
     char  essid[32];
     uint8 essid_len;
     uint8  enable_probe_rep;
-    uint16 seq_id;
+    //uint16 seq_id;
     uint16 beacon_interval;
     uint16 capa_info;   //0x0001;    
 };
-
-int32 create_beacon_frame(struct AP ap, uint8 buf[], uint32 n)
+#define xmemcpy(dest,src,num) memcpy(dest,src,num); dest += num
+uint32 create_beacon_frame(uint8 *buf, uint32 n, struct AP ap)
 {   
     static seq_id = 1024;
-    
-    uint8 buf[2400];
-    memcpy(buf+0, "\x80\x00", 2);         //version[2]:type[2]:subtype[4]:other[8] bits
-    memcpy(buf+2, "\x00\x00", 2);         //duration/id[2] byte
-    memcpy(buf+4, "\xff\xff\xff\xff\xff\xff", 6);       //addr1[6]
-    memcpy(buf+10, ap.bssid, 6);       //addr2
-    memcpy(buf+16, ap.bssid, 6);       //addr3
-    
-    *((uint16*)(buf+22)) = seq_id;
+    uint8 *pbuf = buf;
+    // radiotap header
+    xmemcpy(pbuf, "\x00\x00\x0d\x00\x04\x80\x02\x00\x02\x00\x00\x00\x00", 13); 
+    // header
+    xmemcpy(pbuf, "\x80\x00", 2);        //version[2]:type[2]:subtype[4]:other[8] bits
+    xmemcpy(pbuf, "\x00\x00", 2);        //duration/id[2] byte
+    xmemcpy(pbuf, "\xff\xff\xff\xff\xff\xff", 6);      //addr1[6]
+    xmemcpy(pbuf, ap.bssid, 6);      //addr2
+    xmemcpy(pbuf, ap.bssid, 6);      //addr3
+    xmemcpy(pbuf, (uint8*)&seq_id, 2);
     seq_id += 10;
     // fixed
     struct timeval t_time;
     gettimeofday(&t_time,0);
-    *((uint64*)(buf+24)) = ((uint64)t_time.tv_sec)*1000000+t_time.tv_usec;
-    *((uint16*)(buf+32)) = ap.beacon_interval;
-    *((uint16*)(buf+34)) = ap.capa_info;
+    uint64 timestamp = ((uint64)t_time.tv_sec)*1000000+t_time.tv_usec;
+    xmemcpy(pbuf, (uint8*)&timestamp, 8);
+    xmemcpy(pbuf, (uint8*)&ap.beacon_interval, 2);
+    xmemcpy(pbuf, (uint8*)&ap.capa_info, 2);
     // tagged
-    uint32 offset = 36;
-    buf[offset++] = 0x00;
-    buf[offset++] = ap.essid_len;
-    memcpy(buf+offset, ap.essid, ap.essid_len);
-    offset += ap.essid_len;
+    xmemcpy(pbuf, "\x00", 1);
+    xmemcpy(pbuf, &ap.essid_len, 1);
+    xmemcpy(pbuf, ap.essid, ap.essid_len);
 
+    return (uint32)(pbuf-buf);
 }
-
-int32 main()
+int32 create_raw_socket(const char* p_iface);
+int32 main(int argc, char *argv[])
 {
-    struct ap t_aps[AP_COUNT];
-    uint32 t_i;
-    for(t_i=0;t_i<AP_COUNT;t_i++)
-    {
-        uint8 t_mac[6];
-        char t_essid[32];
-        memcpy(t_mac,"\xEC\x17\x2F\x2D\xB6\xB0",6);
-        memcpy(t_essid,"zjs ap 0",9);
-        t_mac[5]+=t_i;
-        t_essid[7]+=t_i;
-        init_ap(&t_aps[t_i],t_mac,t_essid);
-    }
+    struct AP ap;
+    char ssid[] = "zjs ap 0";
+    memcpy(ap.bssid, "\xEC\x17\x2F\x2D\xB6\xB0", 6);
+    ap.essid_len = strlen(ssid);
+    memcpy(ap.essid, ssid, ap.essid_len);
+    ap.enable_probe_rep = 0;
+    ap.beacon_interval = 100;
+    ap.capa_info = 0x0001;
+
     int32 t_socket=create_raw_socket("wlan0");
     while(1)
     {
-        for(t_i=0;t_i<AP_COUNT;t_i++)
+        uint8 t_buffer[4096];
+        uint32 t_len=create_beacon_frame(t_buffer, n, ap);
+        int32 t_size=write(t_socket, t_buffer, t_len);
+        if(t_size<0)
         {
-            uint8 t_buffer[1024];
-            uint16 t_len=create_beacon_frame(t_buffer,t_aps+t_i);
-            printf("%d\n",send_80211_frame(t_socket,t_buffer,t_len));
+            perror("<send_80211_frame> write() failed!");
         }
-        usleep(100000);
+        printf("%d ", t_size);
+        usleep(ap.beacon_interval*1000);
     }
     return 0;
-}
-
-
-
-
-struct MAC_HEADER mac_header = {{0x80,0x00}, 0x00,0x00, 0xff,0xff,0xff,0xff,0xff,0xff, }
-uint8 *body;
-    uint8 fcs[4];
-
-
-struct ap
-{
-    uint8 bssid[6];
-    uint16 seq_id;
-    uint8 essid_len;
-    char essid[32];
-};
-
-void init_ap(struct ap* p_ap,uint8* p_bssid,char* p_essid)
-{
-    memcpy(p_ap->bssid,p_bssid,6);
-    p_ap->seq_id=0;
-    uint32 t_len=strlen(p_essid);
-    if(t_len>32)
-        t_len=32;
-    p_ap->essid_len=t_len;
-    memcpy(p_ap->essid,p_essid,t_len);
-}
-uint16 create_beacon_frame(uint8* p_buffer,struct ap* p_ap)
-{
-    memcpy(p_buffer,"\x80\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF",10);
-    memcpy(p_buffer+10,p_ap->bssid,6);
-    memcpy(p_buffer+16,p_ap->bssid,6);
-    p_buffer[22]=(uint8)(p_ap->seq_id&0xFF);
-    p_buffer[23]=(uint8)((p_ap->seq_id>>8)&0xFF);
-    p_ap->seq_id+=0x10;
-    struct timeval t_time;
-    gettimeofday(&t_time,0);
-    uint64 t_timestamp=((uint64)t_time.tv_sec)*1000000+t_time.tv_usec;
-    uint8 t_i;
-    for(t_i=0;t_i<8;t_i++)
-         p_buffer[24+t_i]=(uint8)((t_timestamp>>(t_i<<3))&0xFF);
-    memcpy(p_buffer+32,"\x64\x00\x01\x00",4);
-    p_buffer[36]=0;
-    p_buffer[37]=p_ap->essid_len;
-    memcpy(p_buffer+38,p_ap->essid,p_ap->essid_len);
-    return 38+p_ap->essid_len;
 }
 
 int32 create_raw_socket(const char* p_iface)
@@ -181,48 +134,3 @@ int32 create_raw_socket(const char* p_iface)
     }
     return t_socket;
 }
-
-int32 send_80211_frame(int32 p_socket,uint8* p_buffer,uint32 p_size)
-{
-    uint8 t_buffer[4096];
-    uint8* t_radiotap=(uint8*)"\x00\x00\x0d\x00\x04\x80\x02\x00\x02\x00\x00\x00\x00";
-    memcpy(t_buffer,t_radiotap,13);
-    memcpy(t_buffer+13,p_buffer,p_size);
-    p_size+=13;
-    int32 t_size=write(p_socket,t_buffer,p_size);
-    if(t_size<0)
-    {
-        perror("<send_80211_frame> write() failed!");
-        return -1;
-    }
-    return t_size;
-}
-
-int32 main()
-{
-    struct ap t_aps[AP_COUNT];
-    uint32 t_i;
-    for(t_i=0;t_i<AP_COUNT;t_i++)
-    {
-        uint8 t_mac[6];
-        char t_essid[32];
-        memcpy(t_mac,"\xEC\x17\x2F\x2D\xB6\xB0",6);
-        memcpy(t_essid,"zjs ap 0",9);
-        t_mac[5]+=t_i;
-        t_essid[7]+=t_i;
-        init_ap(&t_aps[t_i],t_mac,t_essid);
-    }
-    int32 t_socket=create_raw_socket("wlan0");
-    while(1)
-    {
-        for(t_i=0;t_i<AP_COUNT;t_i++)
-        {
-            uint8 t_buffer[1024];
-            uint16 t_len=create_beacon_frame(t_buffer,t_aps+t_i);
-            printf("%d\n",send_80211_frame(t_socket,t_buffer,t_len));
-        }
-        usleep(100000);
-    }
-    return 0;
-}
-
