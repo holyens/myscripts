@@ -4,6 +4,7 @@
 
 # 设置要监听的无线信道
 if [ x$1 = x ]; then
+  :
   #sudo iw dev wlan0 channel 1
 else
   sudo iw dev wlan0 channel $1
