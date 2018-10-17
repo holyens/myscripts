@@ -14,7 +14,7 @@ for ((i=1; i<=13; i++))
 do	
     sudo iw dev wlan0 set channel $i
     echo "channel-$i"
-    sudo tshark -i wlan0  -a duration:$2 -w cap/$1_$2_$i.pcapng -n
+    sudo tshark -i wlan0  -a duration:$2 -w $1_$2_$i.pcapng -n
     if [ 1 == $i ]
     then
         :
@@ -24,5 +24,5 @@ else
 # Do capture on the specified channel
     sudo iw dev wlan0 set channel $3
     echo "channel-$3"
-    sudo tshark -i wlan0  -a duration:$2 -w cap/$1_$2_$3.pcapng -n
+    sudo tshark -i wlan0  -a duration:$2 -w $1_$2_$3.pcapng -n
 fi

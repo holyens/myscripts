@@ -50,7 +50,7 @@ uint32 create_beacon_frame(uint8 *buf, uint32 n, struct AP ap)
     xmemcpy(pbuf, ap.bssid, 6);      //addr2
     xmemcpy(pbuf, ap.bssid, 6);      //addr3
     xmemcpy(pbuf, (uint8*)&seq_id, 2);
-    seq_id += 10;
+    seq_id += 0x10;
     // fixed
     struct timeval t_time;
     gettimeofday(&t_time,0);
@@ -66,17 +66,39 @@ uint32 create_beacon_frame(uint8 *buf, uint32 n, struct AP ap)
     return (uint32)(pbuf-buf);
 }
 int32 create_raw_socket(const char* p_iface);
+// sizeof(str)>=18
+char *bssid2str(char *str, uint8 bssid[])
+{
+    const char *hex_tb="0123456789abcdef";
+    int32 j=0;
+    for(int32 i=0;i<6;i++){
+        str[j++]=hex_tb[(bssid[i]>>4)&0x0f];
+        str[j++]=hex_tb[bssid[i]&0x0f];
+        str[j++]=':';
+    }
+    str[j-1]='\0';
+    return str;
+}
 int32 main(int argc, char *argv[])
 {
-    struct AP ap;
-    char ssid[] = "zjs ap 0";
+    struct AP ap;    
+    const char *ssid = "testap-1";
     memcpy(ap.bssid, "\xEC\x17\x2F\x2D\xB6\xB0", 6);
+    if(argc>1)
+        ssid = argv[1];
     ap.essid_len = strlen(ssid);
     memcpy(ap.essid, ssid, ap.essid_len);
+    
     ap.enable_probe_rep = 0;
-    ap.beacon_interval = 100;
+    if(argc>2)
+        ap.beacon_interval = (uint16)atoi(argv[2]);
+    else
+        ap.beacon_interval = 100;
     ap.capa_info = 0x0001;
-
+    char *str=(char *)malloc(6*3*sizeof(uint8));
+    str = bssid2str(str, ap.bssid);
+    printf("bssid=%s ssid=%s\nbeacon interval=%d\n",str, ssid,\
+         ap.beacon_interval);
     int32 t_socket=create_raw_socket("wlan0");
     while(1)
     {
