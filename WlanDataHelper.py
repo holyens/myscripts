@@ -13,13 +13,15 @@ class WlanDataHelper:
     rssi_defval = -100
     channel_defval = 0
 
-    def __init__(self, directory='.', filename=''):
-        self.directory = directory.rstrip('/')
-        self.filename = filename
+    def __init__(self, inDir='.', inFilename='',outDir='.',outFilePrefix='out'):
+        self.inDir = inDir.rstrip('/')
+        self.inFilename = inFilename
+        self.outDir = outDir.rstrip('/')
+        self.outFilePrefix = outFilePrefix
 
     def readFile(self):
         self.data = [[],[],[],[],[]]
-        with open(self.directory+'/'+self.filename,'r') as fpsrc:
+        with open(self.inDir+'/'+self.inFilename,'r') as fpsrc:
         #if os.path.getsize(srcfile)<100*1024*1024:
             for line in fpsrc:     
                 res = [f(s) for f,s in zip((int,str,int,int,int), line.split(' '))]
@@ -87,3 +89,19 @@ class WlanDataHelper:
         total_num = self.rssiArray.shape[0]
         self.lossVector = np.sum(self.rssiArray==WlanDataHelper.rssi_defval, axis=0)/total_num
         return np.mean(self.lossVector)
+
+    def write2csv(self, tag, list):
+        with open(self.outDir+'/'+self.outFilePrefix+tag+'.csv', 'w') as fpdst:
+            for e in list:
+                line =  ','.join(e)+'\n'
+                fpdst.write(line)
+        return True
+    
+    def writeLoss2csv(self):
+        list=[]
+        for i,bssid in enumerate(self.bssidset):
+            list.append((bssid, str(self.lossVector[i])))
+        # sort
+        list.sort(key=lambda tpl: tpl[1], reverse=False)    
+        return self.write2csv('loss', list)
+    
