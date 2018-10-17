@@ -13,15 +13,13 @@ class WlanDataHelper:
     rssi_defval = -100
     channel_defval = 0
 
-    def __init__(self, inDir='.', inFilename='',outDir='.',outFilePrefix='out'):
-        self.inDir = inDir.rstrip('/')
+    def __init__(self, inFilename='', outFilePrefix='out'):
         self.inFilename = inFilename
-        self.outDir = outDir.rstrip('/')
         self.outFilePrefix = outFilePrefix
 
     def readFile(self):
         self.data = [[],[],[],[],[]]
-        with open(self.inDir+'/'+self.inFilename,'r') as fpsrc:
+        with open(self.inFilename,'r') as fpsrc:
         #if os.path.getsize(srcfile)<100*1024*1024:
             for line in fpsrc:     
                 res = [f(s) for f,s in zip((int,str,int,int,int), line.split(' '))]
@@ -91,7 +89,7 @@ class WlanDataHelper:
         return np.mean(self.lossVector)
 
     def write2csv(self, tag, list):
-        with open(self.outDir+'/'+self.outFilePrefix+tag+'.csv', 'w') as fpdst:
+        with open(self.outFilePrefix+tag+'.csv', 'w') as fpdst:
             for e in list:
                 line =  ','.join(e)+'\n'
                 fpdst.write(line)
@@ -105,3 +103,16 @@ class WlanDataHelper:
         list.sort(key=lambda tpl: tpl[1], reverse=False)    
         return self.write2csv('loss', list)
     
+    def getGlobalBssidSet(self):
+        with open(self.outFilePrefix+'loss.csv', 'w') as fpdst:
+            for line in fpsrc:
+                line =  ','.join(e)+'\n'
+                fpdst.write(line)
+        return True
+
+    def mergeLoss2csv(self):
+        with open(self.outFilePrefix+'loss.csv', 'w') as fpdst:
+            for line in fpsrc:
+                line =  ','.join(e)+'\n'
+                fpdst.write(line)
+        return True
