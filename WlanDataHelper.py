@@ -105,14 +105,14 @@ class WlanDataHelper:
     
     def getGlobalBssidSet(self):
         with open(self.outFilePrefix+'loss.csv', 'w') as fpdst:
-            for line in fpsrc:
-                line =  ','.join(e)+'\n'
+            for line in fpdst:
+                line =  ','.join(self.bssidset)+'\n'
                 fpdst.write(line)
         return True
 
     def mergeLoss2csv(self):
         with open(self.outFilePrefix+'loss.csv', 'w') as fpdst:
-            for line in fpsrc:
+            for line in fpdst:
                 line =  ','.join(e)+'\n'
                 fpdst.write(line)
         return True
