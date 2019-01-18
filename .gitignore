@@ -1,4 +1,5 @@
 #
 .gitignore
+rssi-pcaptools/.git
 __pycache__
 *.o
