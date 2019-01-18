@@ -36,11 +36,10 @@
     -   $manual_channel (int): 如果被设置，则程序只在该信道捕获$duration秒数据；如果未被设置，程序将在1-13信道依次各捕获$duration秒数据
 -   提示：捕获的文件可以使用WiresharkGtk打开查看
 5. exportPcap2csv.sh
--   脚本功能: 将$1目录中的`.pcapng`文件导出为`.csv`文件。
--   运行参数： `./exportPcap2csv.sh $1 $2 [$3]`
-    -   $1: 输入文件所在目录
-    -   $2: 输入文件前缀 
-    -   $3: 帧过滤器，如`wlan.fc.type_subtype==0x08`表示仅输出802.11 beacon帧
+-   脚本功能: 将以$1为前缀的`.pcapng`文件导出为`.csv`文件。
+-   运行参数： `./exportPcap2csv.sh $1 [$2]`
+    -   $1: 输入文件前缀 
+    -   $2: 帧过滤器，如`wlan.fc.type_subtype==0x08`表示仅输出802.11 beacon帧
 -   提示：可以指定输出到csv文件的帧的fields，可以使用tshark的`-e`选项设置
 6. estenblishAP.sh
 -   脚本功能： 将`./hostapd.conf`作为配置文件，使用hostapd建立AP
@@ -58,7 +57,7 @@
 ./configWifi			#设置网卡名为wlan0，工作模式为monitor，工作信道为5（可选）
 ./autoCapBeacon.sh cap/wifibeacon_A1 20 5	#使用tshark在信道5抓包20s，并将结果保存到文件cap/wifibeacon_A1_20_5.pcapng
 ./autoCapBeacon.sh cap/wifibeacon_A2 20		#使用tshark在1-13信道依次抓包各20s，并将结果保存到文件cap/wifibeacon_A2_20_1.pcapng，cap/wifibeacon_A2_20_2.pcapng，...
-./exportPcap2csv.sh cap/wifibeacon_A2 wlan.fc.type_subtype==0x08	#将上一命令的所有输出文件导出为同名的.csv文件，导出时只导出满足过滤条件的帧
+./exportPcap2csv.sh cap/wifibeacon_A2 "wlan.fc.type_subtype==0x08 and wlan.fc.type_subtype==0x08"	#将上一命令的所有输出文件导出为同名的.csv文件，导出时只导出满足过滤条件的帧
 ./resetWifi.sh			#重置`wlan0`为managed模式，因为无线网卡在monitor模式无法上网
 
 ```
