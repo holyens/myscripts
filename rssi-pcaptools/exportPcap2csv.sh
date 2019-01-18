@@ -1,16 +1,15 @@
 #!/bin/bash
-# function: export .pcapng files to .csv files from directory $1
-# $1: input files directory
-# $2: input file name prefix 
-# $3: Frame filter (e.g., "wlan.fc.type_subtype==0x08")
+# function: export .pcapng files to .csv files
+# $1: input file name prefix ('/' be allowed)
+# $2: Frame filter (e.g., "wlan.fc.type_subtype==0x08")
 
 if [ x"$1" = x ] ; then
-    echo "[Error-2]: Directory not specified"
+    echo "[Error-2]: Input filename prefix not specified"
     exit -2
 fi
 scnt=0
 ttnt=0
-for file in $1/$2*.pcapng
+for file in $1*.pcapng
 do
     outfile=${file/%.pcapng/.csv}
     if test -f $file

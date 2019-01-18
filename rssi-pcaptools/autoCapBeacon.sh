@@ -1,7 +1,7 @@
 #!/bin/bash
 # function: use tshark to capture wlan data packages, and save the result to files "cap/$1_$2_$channel.pcapng".
 # $1: Filename prefix
-# $2: Capture time on all channel(2.4GHz)
+# $2: Capture time on single channel
 # $3: Manual channel
 # -f wlan[0]==0x80 (Not yet)
 
